@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pre-commit hook: allowlist of paths that may appear in commits.
+# Activated via `git config core.hooksPath hooks`.
+#
+# If a commit (manual or scripted) tries to stage any file outside this
+# list, the hook blocks it. To allow a new path, edit the regex below
+# and commit the updated hook (it's tracked in the repo).
+
+set -euo pipefail
+
+ALLOWED='^(README\.md$|digests/|src/|prompts/|templates/|hooks/|feeds\.yaml$|requirements\.txt$|run_news_agent\.sh$|install\.sh$|published_links\.json$|\.gitignore$|\.python-version$|com\..*\.plist\.template$)'
+
+violations=$(git diff --cached --name-only | grep -v -E "$ALLOWED" || true)
+
+if [ -n "$violations" ]; then
+    echo "Pre-commit blocked: files outside allowlist:" >&2
+    echo "$violations" >&2
+    echo "" >&2
+    echo "If this is intentional, edit hooks/pre-commit and add the path." >&2
+    exit 1
+fi

@@ -1,0 +1,41 @@
+# Intermediate pipeline artifacts (regenerated daily)
+raw_items.json
+ranked.json
+enriched.json
+digest.json
+
+# Logs / state we don't want in version control
+logs/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Old HTML output (replaced by Markdown approach)
+site/
+
+# OS / editor noise
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Defensive — block accidental credential commits
+.env
+.env.*
+*.key
+*.pem
+*.pfx
+secrets/
+secret*
+credentials*
+auth.json
+.netrc
+
+# Python pyenv local file is OK to commit, but pyenv versions/ trees aren't
+.pyenv-version
+
+# Rendered launchd plist (use install.sh to regenerate from template)
+com.newsagent.plist

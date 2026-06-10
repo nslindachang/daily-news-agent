@@ -1,0 +1,27 @@
+# News Digest — {{ date_long }}
+
+[World ({{ groups.world | length }})](#world) · [Singapore ({{ groups.singapore | length }})](#singapore) · [Tech ({{ groups.tech | length }})](#tech) · [Archive](../README.md#archive)
+
+{% for bucket in ['world', 'singapore', 'tech'] %}
+{% set items = groups[bucket] %}
+{% if items %}
+
+## {{ bucket | capitalize }}
+
+{% for item in items %}
+### [{{ item.title }}]({{ item.link }})
+*{{ item.source }}*
+
+{{ item.summary }}
+
+{% for kp in item.key_points %}
+- {{ kp }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+---
+
+*Generated {{ generated_at }}*

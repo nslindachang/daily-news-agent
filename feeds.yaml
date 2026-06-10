@@ -1,0 +1,63 @@
+# RSS feed sources for the news agent.
+# bucket: world | singapore | tech — used downstream for ranking + grouping.
+# URLs marked TODO need verification on first run.
+
+sources:
+  # ---------- Channel News Asia ----------
+  - name: CNA - Top Stories
+    url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml
+    bucket: world
+  - name: CNA - Singapore
+    url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=10416
+    bucket: singapore
+  - name: CNA - Asia
+    url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511
+    bucket: world
+  - name: CNA - World
+    url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311
+    bucket: world
+  - name: CNA - Business
+    url: https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6936
+    bucket: world
+
+  # ---------- New York Times ----------
+  - name: NYT - World
+    url: https://rss.nytimes.com/services/xml/rss/nyt/World.xml
+    bucket: world
+  - name: NYT - Business
+    url: https://rss.nytimes.com/services/xml/rss/nyt/Business.xml
+    bucket: world
+  - name: NYT - Technology
+    url: https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml
+    bucket: tech
+
+  # ---------- BBC ----------
+  - name: BBC - Top Stories
+    url: https://feeds.bbci.co.uk/news/rss.xml
+    bucket: world
+  - name: BBC - World
+    url: https://feeds.bbci.co.uk/news/world/rss.xml
+    bucket: world
+  - name: BBC - Business
+    url: https://feeds.bbci.co.uk/news/business/rss.xml
+    bucket: world
+  - name: BBC - Technology
+    url: https://feeds.bbci.co.uk/news/technology/rss.xml
+    bucket: tech
+
+  # ---------- Tech sources ----------
+  - name: Slashdot
+    url: https://rss.slashdot.org/Slashdot/slashdotMain
+    bucket: tech
+  - name: InfoQ
+    url: https://feed.infoq.com/
+    bucket: tech
+  - name: Wired - Main
+    url: https://www.wired.com/feed/rss
+    bucket: tech
+  - name: Wired - Business
+    url: https://www.wired.com/feed/category/business/latest/rss
+    bucket: tech
+  - name: Wired - Security
+    url: https://www.wired.com/feed/category/security/latest/rss
+    bucket: tech
