@@ -1,10 +1,10 @@
 # news-agent
 
-Self-hosted daily news digest. Each morning at 6am SGT, pulls ~17 RSS feeds across world, Singapore, and tech sources, uses Claude to filter for impact and write summaries, and publishes a Markdown digest to this repo for reading on mobile via the GitHub app.
+Self-hosted daily news digest. Each morning at 6am SGT, pulls ~17 RSS feeds across world, Singapore, and tech sources, uses Claude to filter for impact and write summaries, and publishes a Markdown digest to a repo for reading on mobile via the GitHub app.
 
 ## Today's digest
 
-→ **[digests/today.md](digests/today.md)** *(updated Wednesday, June 10, 2026)*
+→ *Not available in this repos*
 
 ## Intent
 
