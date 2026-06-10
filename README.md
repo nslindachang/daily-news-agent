@@ -4,7 +4,7 @@ Self-hosted daily news digest. Each morning at 6am SGT, pulls ~17 RSS feeds acro
 
 ## Today's digest
 
-→ *Not available in this repos*
+→ *Not available in this repo*
 
 ## Intent
 
@@ -16,7 +16,7 @@ A personal daily-reader replacement, not a general news tool. Assumes one reader
 
 It deliberately filters OUT sports, entertainment, lifestyle, opinion/commentary, product reviews, gadget launches, deal roundups, and human-interest oddities. The ranker is biased toward substance over hot takes.
 
-## Mechanism
+## How it works
 
 Six-stage pipeline, one script per stage in `src/`:
 
@@ -43,18 +43,105 @@ git push           → GitHub            Publish for mobile reading
 
 **Push auth**: uses a dedicated passphraseless deploy key (`~/.ssh/news_agent_deploy`) via `git config core.sshCommand` with `IdentityAgent=none` and `IdentitiesOnly=yes`. The unattended job does not depend on `ssh-agent` or macOS keychain — both proved unreliable across reboots for a 6am background job.
 
+## Setup
+
+Prerequisites are listed in [Assumptions](#assumptions) below. The flow:
+
+1. **Clone the repo** into your workspace.
+
+2. **Create and activate the Python virtualenv** (the name must match what's in `.python-version`):
+   ```
+   pyenv virtualenv 3.13.5 news-virtualenv-3.13
+   pyenv activate news-virtualenv-3.13
+   ```
+
+3. **Install dependencies**:
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. **Generate the dedicated deploy key** (no passphrase, used only by this project):
+   ```
+   ssh-keygen -t ed25519 -f ~/.ssh/news_agent_deploy -N ''
+   ```
+
+5. **Add the public key as a Deploy Key on GitHub**:
+   - Open `https://github.com/<your-user>/news-agent/settings/keys/new`
+   - Paste the contents of `~/.ssh/news_agent_deploy.pub` into the Key field
+   - Tick **Allow write access** (required — without it the daily push will fail)
+   - Click **Add key**
+
+6. **Run the installer** (idempotent — safe to re-run):
+   ```
+   ./install.sh
+   ```
+   This renders the launchd plist from its template, installs it into `~/Library/LaunchAgents`, bootstraps the job, and configures `git core.sshCommand` to use the deploy key.
+
+7. **Schedule the Mac to wake** before the 6am job (one-time, requires sudo):
+   ```
+   sudo pmset repeat wakeorpoweron MTWRFSU 05:55:00
+   ```
+   Verify with `pmset -g sched`.
+
+Uninstall with `./install.sh uninstall`.
+
+## Usage
+
+**Daily automated run.** Nothing to do — `launchd` fires `com.newsagent.daily` at 6am SGT and the pipeline takes 3–5 minutes. The new digest lands at `digests/today.md` and on GitHub for mobile reading.
+
+**Manual run.** From the project root:
+```
+./run_news_agent.sh
+```
+Same script `launchd` invokes — same allowlist git push, same logging. Useful for testing changes to prompts, feeds, or scripts.
+
+**Test the launchd code path itself** (runs in the unattended context, not your shell):
+```
+launchctl kickstart -p gui/$(id -u)/com.newsagent.daily
+tail -f logs/$(date +%Y-%m-%d).log
+```
+
+**Read the digest on mobile.** Open the GitHub iOS/Android app → `news-agent` repo → `digests/today.md`. Bookmark it once.
+
+**Inspect a failure.**
+- Per-day script log: `logs/YYYY-MM-DD.log`
+- `claude` stderr+stdout dumped on retryable failures: `logs/{rank,summarize}_{stderr,response}_<ts>_a<n>.txt`
+- launchd-level stdout/err: `logs/launchd.out`, `logs/launchd.err`
+
+**Force a fresh pipeline** (discard intermediate state from a prior partial run):
+```
+rm -f raw_items.json ranked.json enriched.json digest.json
+./run_news_agent.sh
+```
+
+## Configuration
+
+No environment variables. Everything tunable lives in a small set of files:
+
+| What to change | Where |
+|---|---|
+| RSS sources — add/remove/reorder feeds | `feeds.yaml` |
+| Ranking criteria, bucket targets, junk rules | `prompts/rank.md` |
+| Summary voice, length, key-points style | `prompts/summarize.md` |
+| Rank model (Haiku default) and per-attempt timeout (180s) | `src/rank.py` — `CLAUDE_MODEL`, `CALL_TIMEOUT` |
+| Summarize model (Sonnet default) and per-attempt timeout (360s) | `src/summarize.py` — `CLAUDE_MODEL`, `CALL_TIMEOUT` |
+| RSS lookback window (30h default) | `src/fetch_feeds.py` — `MAX_AGE_HOURS` |
+| Pre-rank junk filters — title patterns, URL paths, category tokens | `src/fetch_feeds.py` — `JUNK_*` constants |
+| Number of claude retries (3 default) and backoff | `src/claude_client.py` |
+| Daily schedule | `com.newsagent.plist.template` — `StartCalendarInterval` (re-run `./install.sh` after) |
+| Mac wake schedule | `pmset` (run the command from Setup step 7 with new times) |
+| Allowlist of paths that may be committed | `hooks/pre-commit` |
+
 ## Assumptions
 
-Designed for a single specific setup:
+The environmental contract — *what must be true* for the system to work. See [Setup](#setup) for the commands that satisfy each one.
 
 - **macOS** with `launchd` (Apple Silicon Homebrew paths in the plist).
-- **pyenv-virtualenv** venv named `news-virtualenv-3.13` (Python 3.13.5). Install `requirements.txt` into the venv directly (`~/.pyenv/versions/news-virtualenv-3.13/bin/pip`).
-- **Claude Code CLI** at `~/.local/bin/claude`, with an active Claude subscription that has Haiku + Sonnet access.
-- **GitHub deploy key**: `~/.ssh/news_agent_deploy.pub` added to the repo's Deploy Keys with **Allow write access** enabled. Generate with `ssh-keygen -t ed25519 -f ~/.ssh/news_agent_deploy -N ''`.
-- **Mac stays plugged in and can wake from sleep** at 5:55am (lid closed is fine). `LaunchAgents` only fire while a user is logged in.
+- **Python 3.13** available via `pyenv`, plus the `pyenv-virtualenv` plugin.
+- **Claude Code CLI** installed at `~/.local/bin/claude`, with an active subscription that includes Haiku and Sonnet access.
+- **A passphraseless SSH key** registered as a write-enabled Deploy Key on the repo, so the daily push runs without ssh-agent or keychain.
+- **Mac stays plugged in and able to wake from sleep** at 5:55 am (lid closed is fine). `LaunchAgents` only fire while a user is logged in.
 - **Mac timezone is SGT** — the plist uses local time, not UTC.
-
-`install.sh` (idempotent) wires up the plist, the `core.sshCommand`, and verifies the deploy key is present.
 
 ## Limitations
 
