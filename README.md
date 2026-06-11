@@ -169,3 +169,7 @@ com.newsagent.plist.template    launchd job (paths interpolated by install.sh)
 digests/         generated Markdown (today.md + dated archive)
 published_links.json  cross-day dedup state (tracked)
 ```
+
+## AI Assistance Disclosure
+
+Parts of this project were developed with assistance from generative AI tools.
